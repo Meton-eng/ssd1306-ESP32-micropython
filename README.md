@@ -10,6 +10,14 @@ Comments and methods were originally written in Brazil Protuguese. Version in en
 
 > **Note:** This driver is configured for **128x32** displays. For 128x64 displays, adjust `init_seq` (`0xA8, 0x3F` and `0x22, 0x00, 0x07`) and the framebuffer size (1024 bytes).
 
+## Utilization examples
+- The <flash> method turns on and off all pixels in the display.
+- Example of usage for temperature and umidity meter. ANT10 is necessary.
+- Horizontal scroll
+- Vertical scroll
+- 4 lines with 8x8 font
+- 3 lines with 8x16 font
+
 
 ## Wiring
 | SSD1306 | ESP32  |
