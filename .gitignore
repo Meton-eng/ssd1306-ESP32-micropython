@@ -1,0 +1,8 @@
+examples/bitmap_trials/
+datasheets/
+versoes_antigas/
+prints/
+*.pdf
+*.bak
+__pycache__/
+*.pyc
