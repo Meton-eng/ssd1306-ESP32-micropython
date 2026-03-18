@@ -2,7 +2,11 @@
 ## Simple script to test the functionalities of the SSD1306 Driver. 
 ####################
 
-from machine import Pin, SoftI2C
+from machine import Pin, SoftI2C, RTC
+from sensores import AHT10
+from time import sleep
+
+### Start of class definition
 from time import sleep_ms
 
 STAR_DOT   =  '\x01'
@@ -14,7 +18,7 @@ LEFT_BLOCK =  '\x06'
 RIGHT_BLOCK=  '\x07'
 
 # font 8x8 bitmap 
-fonte_8x8 = {
+font_8x8 = {
     '\x00': (0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00),
     ' ': (0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00),
     '!': (0x00, 0x00, 0x06, 0x5f, 0x5f, 0x06, 0x00, 0x00),
@@ -120,9 +124,9 @@ fonte_8x8 = {
     UP_BLOCK: (0, 0, 15, 15, 15, 15, 0, 0),
     LEFT_BLOCK: (240, 240, 240, 240, 0, 0, 0, 0),
     RIGHT_BLOCK: (0, 0, 0, 0, 240, 240, 240, 240)
-} ############# Fim da Fonte 8x8
+} ############# End of 8x8 font
 
-fonte_8x16 = {
+font_8x16 = {
     '\x00': (0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00),
     ' ': (0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00),
     '!': (0x00, 0x00, 0x38, 0xfc, 0xfc, 0x38, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0d, 0x0d, 0x00, 0x00, 0x00),
@@ -221,7 +225,7 @@ fonte_8x16 = {
     '~': (0x08, 0x0c, 0x04, 0x0c, 0x08, 0x0c, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00),
     '\x7f': (0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00),
     '°': (0x00, 0x18, 0x24, 0x24, 0x18, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00),
-} #########  Fim da fonte 16x8
+} #########  End of 8x 16 font
 
 # control byte for data or commands
 command_byte = bytearray([0x00])  # commands
@@ -252,90 +256,91 @@ init_seq = command_byte + bytearray([
         0x2E,             # deactive scroll
     ])    
 
-'''Classe to control a OLED SSD1306 display'''
+'''Classe to control an OLED SSD1306 display'''
 class SSD1306:
     ## start the class and initiate the display
     def __init__(self, bus, addr = 0x3C):
         self.bus = bus
         self.addr = addr
         bus.writeto(addr, init_seq)
-        self.limpa_tela()
+        self.clean()
 
-    ## limpa a tela
-    def limpa_tela(self):
+    ## clean the display
+    def clean(self):
         self.framebuffer = bytearray(512)
-        self.exibe()
+        self.show()
     
-    ### metodo para forçar a exibicao do frame buffer
-    def exibe(self):
+    ### show the frame buffer content in the display
+    def show(self):
         self.bus.writeto(self.addr, data_byte + self.framebuffer)
-        self.envia_comando(bytearray([0xA4]) )
+        self.send_command(bytearray([0xA4]) )
 
-    def envia_comando(self, comando):
-        self.bus.writeto(self.addr, command_byte + comando)
+    def send_command(self, comand):
+        self.bus.writeto(self.addr, command_byte + comand)
     
-    ## pisca a tela por count segundos, on tempo acesa, off tempo apagada
-    def flash(self, count = 3, on = 300, off = 100):
-        for b in range(count):
+    ## flashes the display for <n> times, <on> is the time the screen is on, <off> is the blank period 
+    ## durationtempo acesa, off tempo apagada
+    def flash(self, n = 3, on = 300, off = 100):
+        for b in range(n):
                 self.framebuffer = ( (bytearray([0xFF] * 512) ) )
-                self.exibe()
+                self.show()
                 sleep_ms(on)
-                self.limpa_tela()
+                self.clean()
                 sleep_ms(off)
     
-    ## liga ou desliga pixels especificos
-    def pixel(self, x, y, status = True):
-        # identifica a pagina a partir da posição y
-        pagina = y // 8
-        # identifica o bit dentro da pagina
+    ## turn on specific pixels if <state> is True, or turn off is state is <False>
+    def pixel(self, x, y, state = True):
+        # intetify the page from the y position 
+        page = y // 8
+        # identify the bit within the page 
         bit = y % 8 
-        # identifica o indice do segmento a partir da posicao x
-        indice = pagina * 128 + x
+        # identify the segment index from the x position
+        index = page * 128 + x
     
-        if status:
-            self.framebuffer[indice] |= (1 << bit)  # acende o pixel
+        if state:
+            self.framebuffer[index] |= (1 << bit)  # turn pixel on 
         else:
-            self.framebuffer[indice] &= ~(1 << bit) # apaga o pixel 
+            self.framebuffer[index] &= ~(1 << bit) # turn pixel off 
 
-    # imprime sequencia de strings na tela usando a fonte definiida acima
-    def texto(self, str_texto, x, y, tamanho = 8):
+    # prints a string, according to font defined in <size> - only 8 or 16 in v3
+    def text(self, str_text, x, y, size = 8):
         
-        # itera sobre cada caractere na string e busca os 8 bytes na fonte
-        for caractere in str_texto:
-            if tamanho == 16:
-                bitmap = fonte_8x16.get(caractere, fonte_8x16[' '])
+        # iterates on each character within the string and fetch the 8 bytes in the font dictionary
+        for character in str_text:
+            if size == 16:
+                bitmap = font_8x16.get(character, font_8x16[' '])
                 
-                for desloc_horiz in range(8):
-                    # página superior — bytes 0-7 → y+8 até y+15
-                    byte_sup = bitmap[desloc_horiz]
+                for horiz_offset in range(8):
+                    # upper page — bytes 0-7 -> y+8 até y+15
+                    byte_sup = bitmap[horiz_offset]
                     
-                    for desloc_vert in range(8):
-                        self.pixel((x + desloc_horiz),
-                                   (y + 15 - desloc_vert),
-                                   bool((byte_sup >> desloc_vert) & 1))
-                    # página inferior — bytes 8-15 → y+0 até y+7
-                    byte_inf = bitmap[desloc_horiz + 8]
+                    for vert_offset in range(8):
+                        self.pixel((x + horiz_offset),
+                                   (y + 15 - vert_offset),
+                                   bool((byte_sup >> vert_offset) & 1))
+                    # lower page — bytes 8-15 -> y+0 até y+7
+                    byte_inf = bitmap[horiz_offset + 8]
                     
-                    for desloc_vert in range(8):
-                        self.pixel((x +  desloc_horiz),
-                                   y + (7 - desloc_vert),
-                                   bool((byte_inf >> desloc_vert) & 1))
-                x += 9  # 8px + 1 de espaço
+                    for vert_offset in range(8):
+                        self.pixel((x +  horiz_offset),
+                                   y + (7 - vert_offset),
+                                   bool((byte_inf >> vert_offset) & 1))
+                x += 9  # (8px + 1) shift to start of next character
                 
             else:
-                bitmap = fonte_8x8.get(caractere, fonte_8x8[' '])
+                bitmap = font_8x8.get(character, font_8x8[' '])
                 
-                # itera em cada em cada byte, e avança o deslocamento horizontal
-                for desloc_horiz, byte in enumerate(bitmap):
+                # iterates in each byte, and shifts the horizontal offset
+                for horiz_offset, byte in enumerate(bitmap):
                     
-                    #itera em cada bit e acende ou apaga o respectivo pixel
-                    for desloc_vert in range(8):                    
-                        self.pixel(x + (7 - desloc_horiz), 
-                                   y + (7 - desloc_vert), 
-                                   ((byte >> desloc_vert) & 1))
-                            # 7 - desloc_horiz e 7-desloc_vert servem para inverter a imagem na tela
+                    #iterates in each bit and turns pixel on or off
+                    for vert_offset in range(8):                    
+                        self.pixel(x + (7 - horiz_offset), 
+                                   y + (7 - vert_offset), 
+                                   ((byte >> vert_offset) & 1))
+                            # 7 - horiz_offset e 7 - desloc_vert mirror the image in the display 
                 
-                # avança pro próximo caractere
+                # shift to the next character
                 x += 8 
 
 ####### END of CLASS ########
@@ -356,35 +361,35 @@ display = SSD1306(i2c_esp32)
 display.flash(2, 200, 50)
 
 # sleep_ms(100)
-# display.limpa_tela()
+# display.clean()
 # for a in range(10):
-#     display.texto( {STAR_DOT}, 0, 24, 8)
-#     display.exibe()
+#     display.text( {STAR_DOT}, 0, 24, 8)
+#     display.show()
 #     sleep_ms(400)
-#     display.texto( {CORNER_DOT}, 0, 24, 8)
-#     display.exibe()
+#     display.text( {CORNER_DOT}, 0, 24, 8)
+#     display.show()
 #     sleep_ms(400)
     
 # ## test to show the 4 lines in the display
-display.limpa_tela()
-display.texto(f'3 spin blocks', 0, 24, 8)
-display.texto(f'  UP_ARROW {UP_ARROW}', 0, 16, 2)
-display.texto(f'DOWN_ARROW {DOWN_ARROW}', 0, 0, 8)
-# display.texto('Nao choraxxxx', 0, 0, 16)
-display.exibe()
+display.clean()
+display.text(f'3 spin blocks', 0, 24, 8)
+display.text(f'  UP_ARROW {UP_ARROW}', 0, 16, 2)
+display.text(f'DOWN_ARROW {DOWN_ARROW}', 0, 0, 8)
+# display.text('Nao choraxxxx', 0, 0, 16)
+display.show()
 # 
 # 
 # ### Vertical scroll test using the display built in scroll functionality
 # for a in range(127):
-#     display.envia_comando(bytearray([0xD3, a]))
+#     display.send_command(bytearray([0xD3, a]))
 #     sleep_ms(150)
-#     display.exibe()
-# display.envia_comando(bytearray([0xD3, 0]))
+#     display.show()
+# display.send_command(bytearray([0xD3, 0]))
 # 
 # sleep_ms(1000)
 # 
 # ## Horizontal scroll test using the display built in scroll functionality
-# display.envia_comando(bytearray([
+# display.send_command(bytearray([
 #     0x2E,        # desativa scroll (obrigatório antes de configurar)
 #     0x26,        # scroll horizontal para direita
 #     0x00,        # dummy byte
@@ -445,7 +450,7 @@ def spin_3_block(x, y, contador):
     else:
         block = LEFT_BLOCK
         contador = 0
-    display.texto(f'{block}', x, y, 8)
+    display.text(f'{block}', x, y, 8)
     return contador
 
 spin_dot_2x2 = {
@@ -528,21 +533,43 @@ def spin_4x4(x, y, contador):
         proximo = contador + 1
     #acende o bloco atual
     offset_x, offset_y = spin_4x4_offset[contador]
-    display.texto(f'{LEFT_BLOCK}' , x + offset_x, y + offset_y)
+    display.text(f'{LEFT_BLOCK}' , x + offset_x, y + offset_y)
     
     return proximo
     
-display.texto(f'{LEFT_BLOCK}' , 0, 16)    
-a = 0
-b = 0
-c = 0
-d = 0
-e = 0
+# display.text(f'{LEFT_BLOCK}' , 0, 16)    
+# a = 0
+# b = 0
+# c = 0
+# d = 0
+# e = 0
+# while True:
+    # a = spin_4(100, 16, a)
+    # b = spin_3(100, 0, b)
+    # c = spin_3_block(100, 24, c)
+    # d = spin_2x2(100, 8, d)
+    # e = spin_4x4(0, 8, e)
+    # display.show()
+    # sleep_ms(500)
+    
+    ## iniciar o sensor
+sensor = AHT10(i2c_esp32)
+OFFSET_TEMP = -4
+
+
+display.clean()
+## obtem e imprime a temperatura e umidade atual
+rtc = RTC()
+
 while True:
-    a = spin_4(100, 16, a)
-    b = spin_3(100, 0, b)
-    c = spin_3_block(100, 24, c)
-    d = spin_2x2(100, 8, d)
-    e = spin_4x4(0, 8, e)
-    display.exibe()
-    sleep_ms(500)
+    for a in range(3):
+        temp, umidade = sensor.valores()
+        agora=rtc.datetime()
+        display.text(f'{agora[4]:02d}:{agora[5]:02d}', 0, 24, 8)
+        display.text(f'{agora[2]:02d}.{agora[1]:02d}.{agora[0]}', 48,24,8)
+        
+        display.text(f'Umidity {umidade:.0f}%', 0, 16,  8)
+        display.text(f'Temp. {temp + OFFSET_TEMP:+.1f}°C',    0,  0, 16)
+        display.show()    
+        sleep(5)
+       
