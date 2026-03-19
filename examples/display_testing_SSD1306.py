@@ -4,8 +4,7 @@
 #
 ######################################################################
 
-from machine import Pin, SoftI2C, RTC
-from sensores import AHT10
+from machine import Pin, SoftI2C
 from time import sleep
 
 ### Start of class definition#################################################################
@@ -266,10 +265,12 @@ class SSD1306:
          (2, 6),(1, 6),(0, 6),(0, 5),(0, 4),(0, 3),(0, 2),(0, 1)    
     )
 
+    ## positional offsets for spin_4
     SPIN_4_OFFSETS = (
         (1, 3),(3, 1),(5, 3),(3, 5)
     )
     
+    ## positional offsets for spin_3
     SPIN_3_OFFSETS = (
         (1, 1),(5, 1),(3, 5)
     )
@@ -423,15 +424,14 @@ class SSD1306:
         following = seq + 1 if seq < 23 else 0
         
         x_offset, y_offset = self.LAZY_SPIN_OFFSETS[previous]
-        self.dot_2x2(x + x_offset, y + y_offset, False)
+        self.dot_2x2(x + x_offset, y + y_offset, False)   #clean previous dot
         
         x_offset, y_offset = self.LAZY_SPIN_OFFSETS[seq]
-        self.dot_2x2(x + x_offset, y + y_offset)
+        self.dot_2x2(x + x_offset, y + y_offset)          #print current dot
         
-        return following
-
-        
+        return following 
 ####### END of CLASS ########
+
 
 ## Declarations and initializations 
 
@@ -453,64 +453,65 @@ time_inter_tests = 4
 display.flash(2, 200, 50)
 
 
-# # test to show the 2 lines with 8x8 font and 1 with 8x16 font
-# display.clean()
-# display.text(f'{display.UP_ARROW}   Top line   {display.UP_ARROW}', 0, 24, 8)
-# display.text(f'|--- Line 2 ---|', 0, 16, 8)
-# display.text(f'Font 8x16 line', 0, 0, 16)
-# display.show()
-# sleep(time_inter_tests)
-# 
-# ## test to show the 4 lines with 8x8 font
-# display.clean()
-# display.text(f'{display.UP_ARROW}   Top line   {display.UP_ARROW}', 0, 24, 8)
-# display.text(f'|--- Line 2 ---|', 0, 16, 8)
-# display.text(f'|--- Line 3 ---|', 0, 8, 8)
-# display.text(f'{display.DOWN_ARROW} Bottom  line {display.DOWN_ARROW}', 0, 0, 8)
-# display.show()
-# sleep(time_inter_tests)
-# 
-# 
-#  
-#  
-#  
-# # ### Vertical scroll test using the display built in scroll functionality
-# for a in range(63):
-#     display.send_command(bytearray([0xD3, a]))
-#     sleep_ms(100) # define scroll speed
-# display.show()
-# display.send_command(bytearray([0xD3, 0]))
-# sleep(time_inter_tests)
-# 
-# 
-# 
-# 
-#  
-# # ## Horizontal scroll test using the display built in scroll functionality
-# display.send_command(bytearray([
-#      0x2E,        # deactivate scroll (mandatory before the configuration)
-#      0x26,        #  horizontal scroll to right
-#      0x00,        # dummy byte
-#      0x00,        # start page (0)
-#      0x00,        # speed (0x00=5 frames, faster, from 0x00 to 0x07)
-#      0x03,        # final page (3 = last page for 128x32 display)
-#      0x00,        # dummy byte
-#      0xFF,        # dummy byte
-#      0x2F,        # activate scroll
-# ]))
-# sleep(time_inter_tests + 5)
-# display.send_command(bytearray([0x2E]))
-# display.clean()
+# test to show 2 lines with 8x8 font and 1 with 8x16 font
+display.clean()
+display.text(f'{display.UP_ARROW}   Top line   {display.UP_ARROW}', 0, 24, 8)
+display.text(f'|--- Line 2 ---|', 0, 16, 8)
+display.text(f'Font 8x16 line', 0, 0, 16)
+display.show()
+sleep(time_inter_tests)
 
 
-    
+
+## test to show 4 lines with 8x8 font
+display.clean()
+display.text(f'{display.UP_ARROW}   Top line   {display.UP_ARROW}', 0, 24, 8)
+display.text(f'|--- Line 2 ---|', 0, 16, 8)
+display.text(f'|--- Line 3 ---|', 0, 8, 8)
+display.text(f'{display.DOWN_ARROW} Bottom  line {display.DOWN_ARROW}', 0, 0, 8)
+display.show()
+sleep(time_inter_tests)
+
+
+ 
+ 
+ 
+### Vertical scroll test using the display built in scroll functionality
+for a in range(63):
+    display.send_command(bytearray([0xD3, a]))
+    sleep_ms(100) # define scroll speed
+display.show()
+display.send_command(bytearray([0xD3, 0]))
+sleep(time_inter_tests)
+
+
+
+
+ 
+## Horizontal scroll test using the display built in scroll functionality
+display.send_command(bytearray([
+     0x2E,        # deactivate scroll (mandatory before the configuration)
+     0x26,        #  horizontal scroll to right
+     0x00,        # dummy byte
+     0x00,        # start page (0)
+     0x00,        # speed (0x00=5 frames, faster, from 0x00 to 0x07)
+     0x03,        # final page (3 = last page for 128x32 display)
+     0x00,        # dummy byte
+     0xFF,        # dummy byte
+     0x2F,        # activate scroll
+]))
+sleep(time_inter_tests + 5)
+display.send_command(bytearray([0x2E]))
+display.clean()
+
+
+## Test for the spinning animation methods
 a = 0
 b = 0
 c = 0
 d = 0
-
 while True:
-    display.text('Spin_4-', 0, 0, 8)
+    display.text('Spin_4', 0, 0, 8)
     a = display.spin_4(60, 0, a)
 
     display.text('Spin_3', 0, 8, 8)
@@ -523,28 +524,4 @@ while True:
     d = display.lazy_spin(100, 24, d)
     
     display.show()
-    sleep_ms(500)
-
-    
-##################################################################################    
-# #### medidor de temperatura e umidade
-# sensor = AHT10(i2c_esp32)
-# OFFSET_TEMP = -4
-
-
-# display.clean()
-# ## obtem e imprime a temperatura e umidade atual
-# rtc = RTC()
-
-# while True:
-    # for a in range(3):
-        # temp, umidade = sensor.valores()
-        # agora=rtc.datetime()
-        # display.text(f'{agora[4]:02d}:{agora[5]:02d}', 0, 24, 8)
-        # display.text(f'{agora[2]:02d}.{agora[1]:02d}.{agora[0]}', 48,24,8)
-        
-        # display.text(f'Umidity {umidade:.0f}%', 0, 16,  8)
-        # display.text(f'Temp. {temp + OFFSET_TEMP:+.1f}°C',    0,  0, 16)
-        # display.show()    
-        # sleep(5)
-       
+    sleep_ms(500)       
