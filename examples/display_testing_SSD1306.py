@@ -227,36 +227,6 @@ font_8x16 = {
     '°': (0x00, 0x18, 0x24, 0x24, 0x18, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00),
 } #########  End of 8x16 font
 
-## positional offsets for lazy_spin
-lazy_spin_offsets = {
-     0: (0, 0),
-     1: (1, 0),
-     2: (2, 0),
-     3: (3, 0),
-     4: (4, 0),
-     5: (5, 0),
-     6: (6, 0),
-     
-     7: (6, 1),
-     8: (6, 2),
-     9: (6, 3),
-    10: (6, 4),
-    11: (6, 5),
-    12: (6, 6),
-    
-    13: (5, 6),    
-    14: (4, 6),
-    15: (3, 6),
-    16: (2, 6),
-    17: (1, 6),
-    18: (0, 6),
-    
-    19: (0, 5),
-    20: (0, 4),
-    21: (0, 3),
-    22: (0, 2),
-    23: (0, 1)    
-}
 
 # control byte for data or commands
 command_byte = bytearray([0x00])  # commands
@@ -289,6 +259,44 @@ init_seq = command_byte + bytearray([
 
 '''Classe to control an OLED SSD1306 display'''
 class SSD1306:
+    ## positional offsets for lazy_spin
+    LAZY_SPIN_OFFSETS = {
+         0: (0, 0),
+         1: (1, 0),
+         2: (2, 0),
+         3: (3, 0),
+         4: (4, 0),
+         5: (5, 0),
+         6: (6, 0),
+         
+         7: (6, 1),
+         8: (6, 2),
+         9: (6, 3),
+        10: (6, 4),
+        11: (6, 5),
+        12: (6, 6),
+        
+        13: (5, 6),    
+        14: (4, 6),
+        15: (3, 6),
+        16: (2, 6),
+        17: (1, 6),
+        18: (0, 6),
+        
+        19: (0, 5),
+        20: (0, 4),
+        21: (0, 3),
+        22: (0, 2),
+        23: (0, 1)    
+    }
+
+    SPIN_4_OFFSETS = {
+        0: (1, 3),
+        1: (3, 1),
+        2: (5, 3),
+        3: (3, 5)
+    }
+    
     ## start the class and initiate the display
     def __init__(self, bus, addr = 0x3C):
         self.bus = bus
@@ -309,8 +317,8 @@ class SSD1306:
         self.bus.writeto(self.addr, data_byte + self.framebuffer)
         self.send_command(bytearray([0xA4]) )
 
-    def send_command(self, comand):
-        self.bus.writeto(self.addr, command_byte + comand)
+    def send_command(self, command):
+        self.bus.writeto(self.addr, command_byte + command)
     
     ## flashes the display for <n> times, <on> is the time the screen is on, <off> is the blank period 
     ## durationtempo acesa, off tempo apagada
@@ -379,31 +387,30 @@ class SSD1306:
 
     # prints or clean a 2x2 dot, used by other methods
     def dot_2x2(self, x, y, state = True):
-        display.pixel(x    , y, state)
-        display.pixel(x + 1, y, state)
-        display.pixel(x    , y + 1, state)
-        display.pixel(x + 1, y + 1, state)
+        self.pixel(x    , y, state)
+        self.pixel(x + 1, y, state)
+        self.pixel(x    , y + 1, state)
+        self.pixel(x + 1, y + 1, state)
+
+
 
     # keeps 4 dots spinning within a 8x8 space
     # usefull to demonstrate system is normal and operating (not freezed)
     def spin_4(self, x, y, seq):
-        if   seq == 0:                  # check current dot sequence
-            self.dot_2x2(x + 1, y + 3)       # prints current dot
-            self.dot_2x2(x + 3, y + 5, False)# erase previous dot
-            return 1                    # returns next dot sequence
-        elif seq == 1:
-            self.dot_2x2(x + 3, y + 1)
-            self.dot_2x2(x + 1, y + 3, False)
-            return 2
-        elif seq == 2:
-            self.dot_2x2(x + 5, y + 3)
-            self.dot_2x2(x + 3, y + 1, False)
-            return 3
-        else:
-            self.dot_2x2(x + 3, y + 5)
-            self.dot_2x2(x + 5, y + 3, False)
-            return 0
-
+        following = seq + 1
+        previous  = seq - 1 
+        if seq == 0:                             # adjust previous dot sequence
+           previous  = 3 
+        if seq == 3:
+           following = 0
+        
+        x_offset, y_offset = self.SPIN_4_OFFSETS[previous]
+        self.dot_2x2(x + x_offset, y + y_offset, False)# erase previous dot
+   
+        x_offset, y_offset = self.SPIN_4_OFFSETS[seq]
+        self.dot_2x2(x + x_offset, y + y_offset)       # prints current dot
+        return following                               # returns next dot sequence
+        
     # keeps 3 dots spinning within a 8x8 space
     # usefull to demonstrate system is normal and operating (not freezed)
     def spin_3(self, x, y, seq):
@@ -432,7 +439,7 @@ class SSD1306:
         else:
             block = LEFT_BLOCK
             seq = 0
-        display.text(f'{block}', x, y, 8)
+        self.text(f'{block}', x, y, 8)
         return seq     
 
 
@@ -449,11 +456,11 @@ class SSD1306:
             previous = seq - 1
             following = seq + 1
             
-        offset_x, offset_y = lazy_spin_offsets[previous]
-        self.dot_2x2(x + offset_x, y + offset_y, False)
+        x_offset, y_offset = self.LAZY_SPIN_OFFSETS[previous]
+        self.dot_2x2(x + x_offset, y + y_offset, False)
         
-        offset_x, offset_y = lazy_spin_offsets[seq]
-        self.dot_2x2(x + offset_x, y + offset_y)
+        x_offset, y_offset = self.LAZY_SPIN_OFFSETS[seq]
+        self.dot_2x2(x + x_offset, y + y_offset)
         
         return following
 
@@ -470,7 +477,10 @@ i2c_esp32 = SoftI2C( scl = scl,
 display = SSD1306(i2c_esp32)          ## declare and initialize the display
 
 time_inter_tests = 1
-## Tests #################################################
+
+
+
+##   Tests
 
 
 ## test the flash method, 2 flashes, 200ms on and 50ms off
@@ -538,8 +548,8 @@ c = 0
 d = 0
 
 while True:
-    display.text('Spin_4', 0, 0, 8)
-    a = display.spin_4(100, 0, a)
+    display.text('Spin_4-', 0, 0, 8)
+    a = display.spin_4(60, 0, a)
 
     display.text('Spin_3', 0, 8, 8)
     b = display.spin_3(100, 8, b)
