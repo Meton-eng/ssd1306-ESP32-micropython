@@ -256,7 +256,7 @@ class SSD1306:
             0x21, 0x00, 0x7F, # col address from 0 to 127
             0x22, 0x00, 0x03, # page address from 0 to 3
             0xAF,             # display ON
-            0x2E,             # deactive scroll
+            0x2E,             # deactivate scroll
         ])    
 
     ## positional offsets for lazy_spin
@@ -327,8 +327,9 @@ class SSD1306:
     def send_command(self, command):
         self.bus.writeto(self.addr, self.COMMAND_BYTE + command)
     
-    ## flashes the display for <n> times, <on> is the time the screen is on, <off> is the blank period 
-    ## durationtempo acesa, off tempo apagada
+    ## flashes the display for <n> times, 
+    ## <on> is the duration the display is all on, 
+    ## <off> is the blank period duration
     def flash(self, n = 3, on = 300, off = 100):
         for b in range(n):
                 self.framebuffer = ( (bytearray([0xFF] * 512) ) )
@@ -339,7 +340,7 @@ class SSD1306:
     
     ## turn on specific pixels if <state> is True, or turn off is state is <False>
     def pixel(self, x, y, state = True):
-        # intetify the page from the y position 
+        # identify the page from the y position 
         page = y // 8
         # identify the bit within the page 
         bit = y % 8 
@@ -360,14 +361,14 @@ class SSD1306:
                 bitmap = self.FONT_8x16.get(character, self.FONT_8x16[' '])
                 
                 for horiz_offset in range(8):
-                    # upper page — bytes 0-7 -> y+8 até y+15
+                    # upper page — bytes 0-7 -> y+8 to y+15
                     byte_sup = bitmap[horiz_offset]
                     
                     for vert_offset in range(8):
                         self.pixel((x + horiz_offset),
                                    (y + 15 - vert_offset),
                                    bool((byte_sup >> vert_offset) & 1))
-                    # lower page — bytes 8-15 -> y+0 até y+7
+                    # lower page — bytes 8-15 -> y+0 to y+7
                     byte_inf = bitmap[horiz_offset + 8]
                     
                     for vert_offset in range(8):
@@ -387,7 +388,7 @@ class SSD1306:
                         self.pixel(x + (7 - horiz_offset), 
                                    y + (7 - vert_offset), 
                                    ((byte >> vert_offset) & 1))
-                            # 7 - horiz_offset e 7 - desloc_vert mirror the image in the display 
+                            # 7 - horiz_offset and 7 - vert_offset mirror the image in the display 
                 
                 # shift to the next character
                 x += 8 
@@ -402,14 +403,10 @@ class SSD1306:
 
 
     # keeps 4 dots spinning within a 8x8 space
-    # usefull to demonstrate system is normal and operating (not freezed)
+    # useful to demonstrate system is normal and operating (not freezed)
     def spin_4(self, x, y, seq):
-        following = seq + 1
-        previous  = seq - 1 
-        if seq == 0:                             # adjust previous dot sequence
-           previous  = 3 
-        if seq == 3:
-           following = 0
+        previous  = seq - 1 if seq > 0 else 3         # adjust previous dot sequence
+        following = seq + 1 if seq < 3 else 0
         
         x_offset, y_offset = self.SPIN_4_OFFSETS[previous]
         self.dot_2x2(x + x_offset, y + y_offset, False)# erase previous dot
@@ -419,23 +416,23 @@ class SSD1306:
         return following                               # returns next dot sequence
         
     # keeps 3 dots spinning within a 8x8 space
-    # usefull to demonstrate system is normal and operating (not freezed)
+    # useful to demonstrate system is normal and operating (not freezed)
     
 
     def spin_3(self, x, y, seq):
         previous  = seq - 1 if seq > 0 else 2
         following = seq + 1 if seq < 2 else 0
             
-        x_offset, y_offset = self.SPIN_4_OFFSETS[previous]
+        x_offset, y_offset = self.SPIN_3_OFFSETS[previous]
         self.dot_2x2(x + x_offset, y + y_offset, False)# erase previous dot
    
-        x_offset, y_offset = self.SPIN_4_OFFSETS[seq]
+        x_offset, y_offset = self.SPIN_3_OFFSETS[seq]
         self.dot_2x2(x + x_offset, y + y_offset)       # prints current dot
         return following                               # returns next dot sequence
         
         
     # keeps 3 blocks spinning within a 8x8 space, uses block characers
-    # usefull to demonstrate system is normal and operating (not freezed)
+    # useful to demonstrate system is normal and operating (not freezed)
     def spin_3_block(self, x, y, seq):
         if seq == 0:
             block = self.UP_BLOCK
@@ -451,18 +448,11 @@ class SSD1306:
 
 
     # keeps 1 dot spinning around a 8x8 space
-    # usefull to demonstrate system is normal and operating (not freezed)
+    # useful to demonstrate system is normal and operating (not freezed)
     def lazy_spin(self, x, y, seq):
-        if seq == 0:
-            previous = 23
-            following = seq + 1
-        elif seq == 23:
-            previous = seq - 1
-            following = 0
-        else:
-            previous = seq - 1
-            following = seq + 1
-            
+        previous  = seq - 1 if seq > 0 else 23
+        following = seq + 1 if seq < 23 else 0
+        
         x_offset, y_offset = self.LAZY_SPIN_OFFSETS[previous]
         self.dot_2x2(x + x_offset, y + y_offset, False)
         
@@ -483,7 +473,7 @@ i2c_esp32 = SoftI2C( scl = scl,
                      freq=400_000)    ## declare and initialize the ESP32 I2C bus                   
 display = SSD1306(i2c_esp32)          ## declare and initialize the display
 
-time_inter_tests = 1
+time_inter_tests = 4
 
 
 
@@ -494,47 +484,54 @@ time_inter_tests = 1
 display.flash(2, 200, 50)
 
 
+# test to show the 2 lines with 8x8 font and 1 with 8x16 font
+display.clean()
+display.text(f'{display.UP_ARROW}   Top line   {display.UP_ARROW}', 0, 24, 8)
+display.text(f'|--- Line 2 ---|', 0, 16, 8)
+display.text(f'Font 8x16 line', 0, 0, 16)
+display.show()
+sleep(time_inter_tests)
 
-# ## test to show the 4 lines with 8x8 font
-# display.clean()
-# display.text(f'{UP_ARROW}   Top line   {UP_ARROW}', 0, 24, 8)
-# display.text(f'|--- Line 2 ---|', 0, 16, 8)
-# display.text(f'|--- Line 3 ---|', 0, 8, 8)
-# display.text(f'{DOWN_ARROW} Bottom  line {DOWN_ARROW}', 0, 0, 8)
-# display.show()
-# sleep(time_inter_tests)
+## test to show the 4 lines with 8x8 font
+display.clean()
+display.text(f'{display.UP_ARROW}   Top line   {display.UP_ARROW}', 0, 24, 8)
+display.text(f'|--- Line 2 ---|', 0, 16, 8)
+display.text(f'|--- Line 3 ---|', 0, 8, 8)
+display.text(f'{display.DOWN_ARROW} Bottom  line {display.DOWN_ARROW}', 0, 0, 8)
+display.show()
+sleep(time_inter_tests)
 
 
  
  
  
 # ### Vertical scroll test using the display built in scroll functionality
-# for a in range(63):
-    # display.send_command(bytearray([0xD3, a]))
-    # sleep_ms(100) # define scroll speed
-# display.show()
-# display.send_command(bytearray([0xD3, 0]))
-# sleep(time_inter_tests)
+for a in range(63):
+    display.send_command(bytearray([0xD3, a]))
+    sleep_ms(100) # define scroll speed
+display.show()
+display.send_command(bytearray([0xD3, 0]))
+sleep(time_inter_tests)
 
 
 
 
  
 # ## Horizontal scroll test using the display built in scroll functionality
-# display.send_command(bytearray([
-    # 0x2E,        # deactivate scroll (mandatory before the configuration)
-    # 0x26,        #  horizontal scroll to right
-    # 0x00,        # dummy byte
-    # 0x00,        # start page (0)
-    # 0x00,        # speed (0x00=5 frames, faster, from 0x00 to 0x07)
-    # 0x03,        # final page (3 = last page for 128x32 display)
-    # 0x00,        # dummy byte
-    # 0xFF,        # dummy byte
-    # 0x2F,        # activate scroll
-# ]))
-# sleep(time_inter_tests + 5)
-# display.send_command(bytearray([0x2E]))
-# display.clean()
+display.send_command(bytearray([
+     0x2E,        # deactivate scroll (mandatory before the configuration)
+     0x26,        #  horizontal scroll to right
+     0x00,        # dummy byte
+     0x00,        # start page (0)
+     0x00,        # speed (0x00=5 frames, faster, from 0x00 to 0x07)
+     0x03,        # final page (3 = last page for 128x32 display)
+     0x00,        # dummy byte
+     0xFF,        # dummy byte
+     0x2F,        # activate scroll
+]))
+sleep(time_inter_tests + 5)
+display.send_command(bytearray([0x2E]))
+display.clean()
 
 
 
