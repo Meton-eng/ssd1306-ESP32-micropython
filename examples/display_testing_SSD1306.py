@@ -265,6 +265,9 @@ class SSD1306:
         bus.writeto(addr, init_seq)
         self.clean()
 
+    def __repr__(self):
+        return f'SSD1306({self.bus}, {self.addr})'
+
     ## clean the display
     def clean(self):
         self.framebuffer = bytearray(512)
@@ -563,6 +566,7 @@ while True:
     # e = spin_4x4(0, 8, e)
     display.show()
     sleep_ms(500)
+
     
 ##################################################################################    
 # #### medidor de temperatura e umidade
