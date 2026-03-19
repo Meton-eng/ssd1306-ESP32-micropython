@@ -372,6 +372,22 @@ class SSD1306:
             self.dot_2x2(x + 3, y + 5)
             self.dot_2x2(x + 5, y + 3, False)
             return 0
+
+    # keeps 3 dots spinning within a 8x8 space
+    # usefull to demonstrate system is normal and operating (not freezed)
+    def spin_3(self, x, y, seq):
+        if   seq == 0:
+            self.dot_2x2(x + 1, y + 1)
+            self.dot_2x2(x + 3, y + 5, False)
+            return seq + 1
+        elif seq == 1:
+            self.dot_2x2(x + 5, y + 1)
+            self.dot_2x2(x + 1, y + 1, False)
+            return 2
+        else:
+            self.dot_2x2(x + 3, y + 5)
+            self.dot_2x2(x + 5, y + 1, False)
+            return 0
             
 ####### END of CLASS ########
 
@@ -440,19 +456,7 @@ display.flash(2, 200, 50)
 
 
 
-def spin_3(x, y, seq):
-    if   seq == 0:
-        dot_2x2(x + 1, y + 1)
-        dot_2x2(x + 3, y + 5, False)
-        return seq + 1
-    elif seq == 1:
-        dot_2x2(x + 5, y + 1)
-        dot_2x2(x + 1, y + 1, False)
-        return 2
-    else:
-        dot_2x2(x + 3, y + 5)
-        dot_2x2(x + 5, y + 1, False)
-        return 0
+
 
 def spin_3_block(x, y, seq):
     if seq == 0:
@@ -509,10 +513,10 @@ def spin_2x2(x, y, seq):
         proximo = seq + 1
         
     offset_x, offset_y = spin_dot_2x2[anterior]
-    dot_2x2(x + offset_x, y + offset_y, False)
+    self.dot_2x2(x + offset_x, y + offset_y, False)
     
     offset_x, offset_y = spin_dot_2x2[seq]
-    dot_2x2(x + offset_x, y + offset_y)
+    self.dot_2x2(x + offset_x, y + offset_y)
     
     return proximo
 
@@ -537,33 +541,25 @@ spin_4x4_offset = {
     14: (0, 2),
     15: (0, 1),
 }
-
-def spin_4x4(x, y, seq):
-    if seq == 0:   # bloco anterior é o 15
-        proximo = seq + 1
-    elif seq == 15: # proximo bloco é o 0
-        proximo = 0
-    else:
-        proximo = seq + 1
-    #state o bloco atual
-    offset_x, offset_y = spin_4x4_offset[seq]
-    display.text(f'{LEFT_BLOCK}' , x + offset_x, y + offset_y)
-    
-    return proximo
-    
+  
     
 a = 0
 b = 0
 c = 0
 d = 0
-e = 0
+
 while True:
-    display.text('Spin_4', 0, 16, 8)
-    a = display.spin_4(100, 16, a)
-    # b = spin_3(100, 0, b)
-    # c = spin_3_block(100, 24, c)
+    display.text('  Spin_4', 0, 0, 8)
+    a = display.spin_4(100, 0, a)
+
+    display.text('  Spin_3', 0, 8, 8)
+    b = display.spin_3(100, 8, b)
+    
+    display.text('Spin_3_block', 0, 16, 8)
+    c = spin_3_block(100, 16, c)
+    
+    
     # d = spin_2x2(100, 8, d)
-    # e = spin_4x4(0, 8, e)
     display.show()
     sleep_ms(500)
 
