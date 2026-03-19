@@ -260,48 +260,19 @@ class SSD1306:
         ])    
 
     ## positional offsets for lazy_spin
-    LAZY_SPIN_OFFSETS = {
-         0: (0, 0),
-         1: (1, 0),
-         2: (2, 0),
-         3: (3, 0),
-         4: (4, 0),
-         5: (5, 0),
-         6: (6, 0),
-         
-         7: (6, 1),
-         8: (6, 2),
-         9: (6, 3),
-        10: (6, 4),
-        11: (6, 5),
-        12: (6, 6),
-        
-        13: (5, 6),    
-        14: (4, 6),
-        15: (3, 6),
-        16: (2, 6),
-        17: (1, 6),
-        18: (0, 6),
-        
-        19: (0, 5),
-        20: (0, 4),
-        21: (0, 3),
-        22: (0, 2),
-        23: (0, 1)    
-    }
+    LAZY_SPIN_OFFSETS = (
+         (0, 0),(1, 0),(2, 0),(3, 0),(4, 0),(5, 0),(6, 0),(6, 1),
+         (6, 2),(6, 3),(6, 4),(6, 5),(6, 6),(5, 6),(4, 6),(3, 6),
+         (2, 6),(1, 6),(0, 6),(0, 5),(0, 4),(0, 3),(0, 2),(0, 1)    
+    )
 
-    SPIN_4_OFFSETS = {
-        0: (1, 3),
-        1: (3, 1),
-        2: (5, 3),
-        3: (3, 5)
-    }
+    SPIN_4_OFFSETS = (
+        (1, 3),(3, 1),(5, 3),(3, 5)
+    )
     
-    SPIN_3_OFFSETS = {
-        0: (1, 1),
-        1: (5, 1),
-        2: (3, 5)
-    }
+    SPIN_3_OFFSETS = (
+        (1, 1),(5, 1),(3, 5)
+    )
     
     
     ## start the class and initiate the display
@@ -429,7 +400,7 @@ class SSD1306:
         return following                               # returns next dot sequence
         
         
-    # keeps 3 blocks spinning within a 8x8 space, uses block characers
+    # keeps 3 blocks spinning within a 8x8 space, uses block characters
     # useful to demonstrate system is normal and operating (not freezed)
     def spin_3_block(self, x, y, seq):
         following = seq + 1 if seq < 2 else 0
@@ -482,65 +453,54 @@ time_inter_tests = 4
 display.flash(2, 200, 50)
 
 
-# test to show the 2 lines with 8x8 font and 1 with 8x16 font
-display.clean()
-display.text(f'{display.UP_ARROW}   Top line   {display.UP_ARROW}', 0, 24, 8)
-display.text(f'|--- Line 2 ---|', 0, 16, 8)
-display.text(f'Font 8x16 line', 0, 0, 16)
-display.show()
-sleep(time_inter_tests)
-
-## test to show the 4 lines with 8x8 font
-display.clean()
-display.text(f'{display.UP_ARROW}   Top line   {display.UP_ARROW}', 0, 24, 8)
-display.text(f'|--- Line 2 ---|', 0, 16, 8)
-display.text(f'|--- Line 3 ---|', 0, 8, 8)
-display.text(f'{display.DOWN_ARROW} Bottom  line {display.DOWN_ARROW}', 0, 0, 8)
-display.show()
-sleep(time_inter_tests)
-
-
- 
- 
- 
-# ### Vertical scroll test using the display built in scroll functionality
-for a in range(63):
-    display.send_command(bytearray([0xD3, a]))
-    sleep_ms(100) # define scroll speed
-display.show()
-display.send_command(bytearray([0xD3, 0]))
-sleep(time_inter_tests)
-
-
-
-
- 
-# ## Horizontal scroll test using the display built in scroll functionality
-display.send_command(bytearray([
-     0x2E,        # deactivate scroll (mandatory before the configuration)
-     0x26,        #  horizontal scroll to right
-     0x00,        # dummy byte
-     0x00,        # start page (0)
-     0x00,        # speed (0x00=5 frames, faster, from 0x00 to 0x07)
-     0x03,        # final page (3 = last page for 128x32 display)
-     0x00,        # dummy byte
-     0xFF,        # dummy byte
-     0x2F,        # activate scroll
-]))
-sleep(time_inter_tests + 5)
-display.send_command(bytearray([0x2E]))
-display.clean()
-
-
-
-
-
-
-
-
-
-
-
+# # test to show the 2 lines with 8x8 font and 1 with 8x16 font
+# display.clean()
+# display.text(f'{display.UP_ARROW}   Top line   {display.UP_ARROW}', 0, 24, 8)
+# display.text(f'|--- Line 2 ---|', 0, 16, 8)
+# display.text(f'Font 8x16 line', 0, 0, 16)
+# display.show()
+# sleep(time_inter_tests)
+# 
+# ## test to show the 4 lines with 8x8 font
+# display.clean()
+# display.text(f'{display.UP_ARROW}   Top line   {display.UP_ARROW}', 0, 24, 8)
+# display.text(f'|--- Line 2 ---|', 0, 16, 8)
+# display.text(f'|--- Line 3 ---|', 0, 8, 8)
+# display.text(f'{display.DOWN_ARROW} Bottom  line {display.DOWN_ARROW}', 0, 0, 8)
+# display.show()
+# sleep(time_inter_tests)
+# 
+# 
+#  
+#  
+#  
+# # ### Vertical scroll test using the display built in scroll functionality
+# for a in range(63):
+#     display.send_command(bytearray([0xD3, a]))
+#     sleep_ms(100) # define scroll speed
+# display.show()
+# display.send_command(bytearray([0xD3, 0]))
+# sleep(time_inter_tests)
+# 
+# 
+# 
+# 
+#  
+# # ## Horizontal scroll test using the display built in scroll functionality
+# display.send_command(bytearray([
+#      0x2E,        # deactivate scroll (mandatory before the configuration)
+#      0x26,        #  horizontal scroll to right
+#      0x00,        # dummy byte
+#      0x00,        # start page (0)
+#      0x00,        # speed (0x00=5 frames, faster, from 0x00 to 0x07)
+#      0x03,        # final page (3 = last page for 128x32 display)
+#      0x00,        # dummy byte
+#      0xFF,        # dummy byte
+#      0x2F,        # activate scroll
+# ]))
+# sleep(time_inter_tests + 5)
+# display.send_command(bytearray([0x2E]))
+# display.clean()
 
 
     
