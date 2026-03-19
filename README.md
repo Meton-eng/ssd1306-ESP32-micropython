@@ -12,19 +12,19 @@ MicroPython driver for the SSD1306 OLED display on ESP32, built from scratch wit
 
 ## Usage Examples
 
-<img src="examples/Images/Umidity and temp.jpg" width="300">  Temperature and humidity display using AHT10 sensor.
+<img src="examples/Images/Umidity and temp.jpg" width="150">  Temperature and humidity display using AHT10 sensor.
 
-<img src="examples/Images/8x8_font_4_lines.jpg" width="300">  Four lines using 8x8 font.
+<img src="examples/Images/8x8_font_4_lines.jpg" width="150">  Four lines using 8x8 font.
 
-<img src="examples/Images/8x16_font.jpg" width="300">  Three lines using 8x16 font.
+<img src="examples/Images/8x16_font.jpg" width="150">  Three lines using 8x16 font.
 
-<img src="examples/Images/flash_method.jpg" width="300">  The `flash()` method cycling all pixels on and off.
+<img src="examples/Images/flash_method.jpg" width="150">  The `flash()` method cycling all pixels on and off.
 
-<img src="examples/Images/vert_scroll.jpg" width="300">  Vertical scroll using `D3` command.
+<img src="examples/Images/vert_scroll.jpg" width="150">  Vertical scroll using `D3` command.
 
-<img src="examples/Images/horiz_scroll.jpg" width="300">  Horizontal scroll using `0x26/0x27` commands.
+<img src="examples/Images/horiz_scroll.jpg" width="150">  Horizontal scroll using `0x26/0x27` commands.
 
-<img src="examples/Images/up_down_arrows.jpg" width="300">  Custom symbols — UP_ARROW and DOWN_ARROW constants.
+<img src="examples/Images/up_down_arrows.jpg" width="150">  Custom symbols — UP_ARROW and DOWN_ARROW constants.
 
 ## Wiring
 
